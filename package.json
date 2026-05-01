@@ -1,0 +1,17 @@
+{
+  "name": "boba-bot",
+  "version": "1.0.0",
+  "description": "A Slack triage bot built with the ADK - classifies help requests and routes them",
+  "type": "module",
+  "scripts": {
+    "dev": "adk dev",
+    "build": "adk build",
+    "deploy": "adk deploy"
+  },
+  "dependencies": {
+    "@botpress/runtime": "^1.18.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
