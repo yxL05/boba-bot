@@ -1,74 +1,54 @@
 # boba-bot
 
-A Slack triage bot built with the Botpress ADK. It monitors channels for help requests, classifies them using AI, and routes them to the right person or channel based on configurable routing rules.
+A Slack bot that handles all boba business within Botpress built using the ADK. It can generate recommendations, display the top-selling drinks, and note down orders (though someone will have to place the order manually on the delivery app of their choice).
 
-## How It Works
+## Use Cases
 
-1. **Trigger**: A new message arrives in a monitored Slack channel
-2. **Classify**: The `classify-request` action uses Zai to categorize the request (bug, feature_request, question, ops_issue)
-3. **Route**: The `triage-flow` workflow looks up routing rules from the `RoutingRulesTable` and posts a summary to the appropriate channel or person
-4. **Respond**: The Slack DM conversation handler answers follow-up questions about triage status
+> **Important:** you must **mention** the bot at the beginning of each command.
 
-## Getting Started
+### Recommendations
 
-1. Install dependencies:
+1. A user types `recommendations [--store (store in available list)] [--pref (preference description)]` in the dedicated Slack channel.
+2. An AI-generated recommendation will be provided based on
+   - the store specified in `--store` if present and among the available list
+   - the preference described in `--pref` if present
+3. The user then has the option to add the recommended drink to the ongoing order if it is from the same store.
 
-   ```bash
-   pnpm install
-   ```
+> If you are not happy with a recommendation, simply enter the text again while specifying in `--pref` that you do not want that particular drink.
 
-2. Configure Slack:
-   - Create a Slack app at https://api.slack.com/apps
-   - Add the bot to your workspace
-   - Run `adk dev` and configure the Slack integration in the Botpress dashboard
+### Top-sellers
 
-3. Seed routing rules:
-   After your first `adk dev`, add rows to the `RoutingRulesTable` via the Botpress dashboard or a script:
+1. A user types `top [--store (store in available list)] [--limit (# of drinks to display, default = 3)]` in the dedicated Slack channel.
+2. The top sellers (of the store if specified) are displayed based on past orders.
 
-   ```
-   | category        | assignee       | slackChannel      | priority |
-   |-----------------|----------------|-------------------|----------|
-   | bug             | @oncall-eng    | #bugs             | high     |
-   | feature_request | @product-team  | #feature_requests | medium   |
-   | question        | @support-team  | #help-desk        | low      |
-   | ops_issue       | @devops        | #ops-alerts       | high     |
-   ```
+### Orders
 
-4. Start development server:
+#### Validate interest
 
-   ```bash
-   adk dev
-   ```
+1. A user initiates a check to see how many people are interested in ordering via `interested --store (store in available list) --limit (time in any format)`.
+2. The bot generates a message declaring the user's intent.
+3. If at least `configuration.minBuyers (default = 3)` (including the person who started the order) people show their interested by reacting to the message before the time limit specified in `--limit`, the intent to order passes and the bot sends a confirmation message. Otherwise, the order is cancelled (since it would be better for the orders to be made individually).
 
-5. Deploy your agent:
-   ```bash
-   adk deploy
-   ```
+#### View menu and place order
 
-## Project Structure
+1. The bot's confirmation message includes a menu for the selected store with numbered entries.
+2. The users who opted in to this order have `configuration.orderTime (default = 30 minutes)` to place their orders via `order (item #) [--specs (plaintext describing ice level, sugar level, extra toppings, etc.)]`.
+3. The bot then provides a confirmation number which can be viewed via `view (order #)` and cancelled (before the time limit) via `cancel (order #)`.
+4. After the time limit has passed, the bot mentions the user who originally initiated the order with a list that includes all placed orders and anyone who has shown interest but who has yet to place their order.
 
-- `src/actions/classify-request.ts` - AI-powered request classification
-- `src/workflows/triage-flow.ts` - Multi-step triage workflow (classify, lookup, route)
-- `src/conversations/slack-dm.ts` - Handles Slack channel messages with AI
-- `src/tables/routing-rules.ts` - Configurable routing rules
-- `src/triggers/new-message.ts` - Fires on new Slack messages
-- `src/knowledge/team-directory.md` - Team directory for AI context
+## Internal Logic
 
-## Customization
+### Stores & menus
 
-### Adding Categories
+- Store names and menu URLs are stored as a Record within the configuration schema.
+- Menus are stored in a single table and will be refreshed every Saturday via a background workflow.
+- The background workflow first re-indexes the KB, then uses it to update the active status of every drink and add new items.
 
-Edit `src/actions/classify-request.ts` to add new categories to the `category` enum and update the Zai label definitions.
+### Order data
 
-### Changing Routing Logic
+- Order history is kept for one week before a workflow clears the table.
+- The # of sales are tracked directly within the menu table.
 
-Edit `src/workflows/triage-flow.ts` to customize how requests are routed. You can add steps for priority escalation, duplicate detection, or SLA tracking.
+## Pitfalls
 
-### Adding Channels
-
-Create new conversation handlers in `src/conversations/` for other Slack channels or platforms (e.g., `slack-channel.ts` for public channel responses).
-
-## Learn More
-
-- [ADK Documentation](https://botpress.com/docs/adk)
-- [Botpress Platform](https://botpress.com)
+> Lack of unique identifiers for menu items (since they are obtained via web crawling) means that duplicates may be created when updating the menu every week.
