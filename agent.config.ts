@@ -19,7 +19,12 @@ export default defineConfig({
 
   configuration: {
     schema: z.object({
-      channelId: z.string().describe('ID of the dedicated channel for the bot.'),
+      channelId: z.string().describe('ID of the dedicated channel for the bot'),
+      confidenceThreshold: z
+        .number()
+        .min(0)
+        .max(1)
+        .describe('The threshold confidence for the bot to recognize a request category'),
     }),
   },
 
