@@ -19,7 +19,7 @@ export default defineConfig({
 
   configuration: {
     schema: z.object({
-      storeUrls: z.record(z.string(), z.string()),
+      channelId: z.string().describe('ID of the dedicated channel for the bot.'),
     }),
   },
 
