@@ -1,15 +1,5 @@
 import { Table, z } from '@botpress/runtime'
 
-export const StoreTable = new Table({
-  name: 'StoreTable',
-  description: 'List of available stores',
-
-  columns: {
-    name: z.string().describe('Name of the store'),
-    menuUrl: z.string().url().describe("URL of the store's web menu to be crawled"),
-  },
-})
-
 export const MenuTable = new Table({
   name: 'MenuTable',
   description: 'Drink menu',
