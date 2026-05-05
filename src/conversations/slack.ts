@@ -1,7 +1,7 @@
 import { Conversation, Autonomous, z, configuration, actions } from '@botpress/runtime'
 import { formatStores } from './store'
-import { listStores } from '../tables/store'
-import { formatMenu } from './menu'
+import { listStores, StoreResponse } from '../tables/store'
+import { formatMenu, formatRecommendation } from './menu'
 import { getMenu } from '../tables/menu'
 
 const stripMention = (message: string) => message.replace(/^<@[^>]*>\s*/, '').trim()
@@ -19,37 +19,36 @@ export default new Conversation({
     const payload = stripMention(props.message.payload.text)
     const { category } = await actions.classifyCommand({ payload })
 
-    async function sendText(text: string) {
-      await props.conversation.send({
-        type: 'text',
-        payload: { text },
-      })
-    }
-
     switch (category) {
-      case 'getCbo':
+      case 'getCbo': {
         await sendText('The Chief Boba Officer is whoever orders the most.')
         break
-      case 'listStores':
+      }
+      case 'listStores': {
         await sendText(formatStores(await listStores()))
         break
-      case 'getMenu':
-        const { name } = await actions.extractStore({ payload })
-        if (!name) {
-          sendText('Please provide a non-empty store name')
-          break
-        }
+      }
+      case 'getMenu': {
+        const store = await resolveStore(payload)
+        if (!store) break
 
-        const store = await actions.parseStore({ name })
-        if (!store) {
-          sendText(`Could not find a store with name (interpreted as) "${name}"`)
-          break
-        }
+        await sendText(formatMenu(await getMenu(store.id), store.name))
+        break
+      }
+      case 'recommend': {
+        const store = await resolveStore(payload)
+        if (!store) break
 
-        sendText(formatMenu(await getMenu(store.id), store.name))
+        const { criteria } = await actions.extractCriteria({ payload })
+
+        const { item } = await actions.generateRecommendation({
+          storeId: store.id,
+          criteria,
+        })
+
+        await sendText(formatRecommendation(item))
         break
-      case 'recommend':
-        break
+      }
       case 'getTop':
         break
       case 'vote':
@@ -58,6 +57,29 @@ export default new Conversation({
         break
       default:
         await sendText("I'm not sure I understood your request. Can you reformulate it?")
+    }
+
+    async function sendText(text: string) {
+      await props.conversation.send({
+        type: 'text',
+        payload: { text },
+      })
+    }
+
+    async function resolveStore(payload: string): Promise<StoreResponse | undefined> {
+      const { name } = await actions.extractStore({ payload })
+      if (!name) {
+        await sendText('Please provide a non-empty store name')
+        return
+      }
+
+      const store = await actions.parseStore({ name })
+      if (!store) {
+        await sendText(`Could not find a store with name (interpreted as) "${name}"`)
+        return
+      }
+
+      return store
     }
   },
 })

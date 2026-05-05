@@ -1,32 +1,44 @@
 import { Table, z } from '@botpress/runtime'
 
+const menuItemSchema = z.object({
+  id: z.number().describe('Menu item ID'),
+  storeId: z.number().describe('ID of the store from which the drink comes from'),
+  name: z.string().describe('Name of the drink'),
+  price: z.number().optional().describe('Price of the drink'),
+  description: z.string().optional().describe('Description of the drink'),
+  ordered: z.number().default(0).describe('Number of times this drink has been ordered'),
+  available: z.boolean().default(true).describe('If a drink is currently available'),
+})
+
 export const menuTable = new Table({
   name: 'MenuTable',
   description: 'Drink menu',
 
   columns: {
-    storeId: z.number().describe('ID of the store from which the drink comes from'),
+    storeId: menuItemSchema.shape.storeId,
     name: {
       searchable: true,
-      schema: z.string().describe('Name of the drink'),
+      schema: menuItemSchema.shape.name,
     },
-    price: z.number().optional().describe('Price of the drink'),
+    price: menuItemSchema.shape.price,
     description: {
       searchable: true,
-      schema: z.string().optional().describe('Description of the drink'),
+      schema: menuItemSchema.shape.description,
     },
-    ordered: z.number().default(0).describe('Number of times this drink has been ordered'),
-    available: z.boolean().default(true).describe('If a drink is currently available'),
+    ordered: menuItemSchema.shape.ordered,
+    available: menuItemSchema.shape.available,
   },
 })
 
-export type MenuItemResponse = {
-  id: number
-  name: string
-  price?: number
-  description?: string
-  ordered: number
-}
+export const menuItemResponseSchema = menuItemSchema.pick({
+  id: true,
+  name: true,
+  price: true,
+  description: true,
+  ordered: true,
+})
+
+export type MenuItemResponse = z.infer<typeof menuItemResponseSchema>
 
 export async function getMenu(storeId: number): Promise<MenuItemResponse[]> {
   const { rows: items } = await menuTable.findRows({

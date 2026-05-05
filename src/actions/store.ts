@@ -1,7 +1,35 @@
 import { Action, adk, z } from '@botpress/runtime'
 import { listStores, storeResponseSchema } from '../tables/store'
 
-export default new Action({
+export const extractStore = new Action({
+  name: 'extractStore',
+  description: 'Extracts the store name from an incoming payload',
+
+  input: z.object({
+    payload: z.string().describe('The raw incoming payload'),
+  }),
+
+  output: z.object({
+    name: z.string().optional().describe('The extracted store name'),
+  }),
+
+  handler: async (props) => {
+    const payload = props.input.payload
+
+    const result = await adk.zai.extract(
+      payload,
+      z.object({
+        storeName: z.string().optional(),
+      })
+    )
+    if (!result.storeName) return {}
+
+    console.log(`Extracted store name: ${result.storeName}`)
+    return { name: result.storeName }
+  },
+})
+
+export const parseStore = new Action({
   name: 'parseStore',
   description: 'Parses an incoming store name',
 
