@@ -1,8 +1,8 @@
 import { Conversation, Autonomous, z, configuration, actions } from '@botpress/runtime'
 import { formatStores } from './store'
 import { listStores, StoreResponse } from '../tables/store'
-import { formatMenu, formatRecommendation } from './menu'
-import { getMenu } from '../tables/menu'
+import { formatMenu, formatRecommendation, formatTopSellers } from './menu'
+import { getMenu, getTopItems } from '../tables/menu'
 
 const stripMention = (message: string) => message.replace(/^<@[^>]*>\s*/, '').trim()
 
@@ -29,14 +29,14 @@ export default new Conversation({
         break
       }
       case 'getMenu': {
-        const store = await resolveStore(payload)
+        const store = await resolveStore({ payload })
         if (!store) break
 
         await sendText(formatMenu(await getMenu(store.id), store.name))
         break
       }
       case 'recommend': {
-        const store = await resolveStore(payload)
+        const store = await resolveStore({ payload })
         if (!store) break
 
         const { criteria } = await actions.extractCriteria({ payload })
@@ -50,6 +50,9 @@ export default new Conversation({
         break
       }
       case 'getTop':
+        const store = await resolveStore({ payload, warn: false })
+        const { limit } = await actions.extractFetchLimit({ payload })
+        await sendText(formatTopSellers(await getTopItems(limit ?? 10, store?.id)))
         break
       case 'vote':
         break
@@ -66,17 +69,23 @@ export default new Conversation({
       })
     }
 
-    async function resolveStore(payload: string): Promise<StoreResponse | undefined> {
+    async function resolveStore({
+      payload,
+      warn = true,
+    }: {
+      payload: string
+      warn?: boolean
+    }): Promise<StoreResponse | null> {
       const { name } = await actions.extractStore({ payload })
       if (!name) {
-        await sendText('Please provide a non-empty store name')
-        return
+        if (warn) await sendText('Please provide a non-empty store name')
+        return null
       }
 
       const store = await actions.parseStore({ name })
       if (!store) {
-        await sendText(`Could not find a store with name (interpreted as) "${name}"`)
-        return
+        if (warn) await sendText(`Could not find a store with name (interpreted as) "${name}"`)
+        return null
       }
 
       return store

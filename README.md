@@ -20,7 +20,7 @@ A Slack bot that handles all boba business within Botpress built using the ADK. 
 
 ### Recommendations
 
-> Example prompt: `Recommend [#] drinks from [store] based on these preferences: [desc]`
+> Example prompt: `Recommend [#] drinks from [store] based on these criteria: [desc]`
 
 An AI-generated recommendation will be provided based on
 

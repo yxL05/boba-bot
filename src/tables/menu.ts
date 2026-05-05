@@ -56,3 +56,23 @@ export async function getMenu(storeId: number): Promise<MenuItemResponse[]> {
     ordered: i.ordered,
   }))
 }
+
+export async function getTopItems(limit: number, storeId?: number): Promise<MenuItemResponse[]> {
+  const { rows: items } = await menuTable.findRows({
+    filter: {
+      storeId,
+      available: true,
+    },
+    orderBy: 'ordered',
+    orderDirection: 'desc',
+    limit,
+  })
+
+  return items.map((i) => ({
+    id: i.id,
+    name: i.name,
+    price: i.price,
+    description: i.description,
+    ordered: i.ordered,
+  }))
+}
