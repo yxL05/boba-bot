@@ -25,7 +25,7 @@ A Slack bot that handles all boba business within Botpress built using the ADK. 
 An AI-generated recommendation will be provided based on
 
 - the # of recommendations requested if present (default = 3)
-- the specified store if present and among the available list
+- the specified store if among the available list
 - the provided description if present
 
 ### Top-sellers

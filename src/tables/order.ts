@@ -1,6 +1,6 @@
 import { Table, z } from '@botpress/runtime'
 
-export const OrderTable = new Table({
+export const orderTable = new Table({
   name: 'OrderTable',
   description: 'List of placed orders. Erased after one week',
 

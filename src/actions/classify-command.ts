@@ -16,10 +16,10 @@ const commandDescs: Record<(typeof commandTypes)[number], string> = {
 
 export default new Action({
   name: 'classifyCommand',
-  description: 'Classifies an incoming command based on its syntax.',
+  description: 'Classifies an incoming command based on its syntax',
 
   input: z.object({
-    message: z.string().describe('The raw help command message text'),
+    payload: z.string().describe('The raw help command payload'),
   }),
 
   output: z.object({
@@ -27,7 +27,7 @@ export default new Action({
   }),
 
   handler: async (props) => {
-    const payload = props.input.message
+    const payload = props.input.payload
     console.log(`Payload received: ${payload}`)
 
     const { output: labels } = await adk.zai.label(payload, commandDescs).result()
