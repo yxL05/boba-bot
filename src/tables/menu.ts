@@ -6,7 +6,6 @@ const menuItemSchema = z.object({
   name: z.string().describe('Name of the drink'),
   price: z.number().optional().describe('Price of the drink'),
   description: z.string().optional().describe('Description of the drink'),
-  ordered: z.number().default(0).describe('Number of times this drink has been ordered'),
   available: z.boolean().default(true).describe('If a drink is currently available'),
 })
 
@@ -25,7 +24,6 @@ export const menuTable = new Table({
       searchable: true,
       schema: menuItemSchema.shape.description,
     },
-    ordered: menuItemSchema.shape.ordered,
     available: menuItemSchema.shape.available,
   },
 })
@@ -35,7 +33,6 @@ export const menuItemResponseSchema = menuItemSchema.pick({
   name: true,
   price: true,
   description: true,
-  ordered: true,
 })
 
 export type MenuItemResponse = z.infer<typeof menuItemResponseSchema>
@@ -53,26 +50,5 @@ export async function getMenu(storeId: number): Promise<MenuItemResponse[]> {
     name: i.name,
     price: i.price,
     description: i.description,
-    ordered: i.ordered,
-  }))
-}
-
-export async function getTopItems(limit: number, storeId?: number): Promise<MenuItemResponse[]> {
-  const { rows: items } = await menuTable.findRows({
-    filter: {
-      storeId,
-      available: true,
-    },
-    orderBy: 'ordered',
-    orderDirection: 'desc',
-    limit,
-  })
-
-  return items.map((i) => ({
-    id: i.id,
-    name: i.name,
-    price: i.price,
-    description: i.description,
-    ordered: i.ordered,
   }))
 }

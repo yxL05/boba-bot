@@ -20,11 +20,10 @@ A Slack bot that handles all boba business within Botpress built using the ADK. 
 
 ### Recommendations
 
-> Example prompt: `Recommend [#] drinks from [store] based on these criteria: [desc]`
+> Example prompt: `Recommend a drink from [store] based on these criteria: [desc]`
 
 An AI-generated recommendation will be provided based on
 
-- the # of recommendations requested if present (default = 3)
 - the specified store if among the available list
 - the provided description if present
 
@@ -46,7 +45,7 @@ The bot generates a message that people can react to if they are interested in o
 
 #### Place order
 
-> Example prompt: `Order [qty] no. [drink # from menu] with [desc (e.g., less ice, half sugar)]`
+> Example prompt: `Order [qty] no. [drink # from menu] with [desc (e.g., less ice, half sugar, toppings)]`
 
 - The users who opted in have `configuration.orderTime (default = 30 minutes)` to place their orders.
 - The bot then provides a confirmation number for that order which can be viewed or cancelled (before the time limit).

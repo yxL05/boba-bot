@@ -5,11 +5,11 @@ export const orderTable = new Table({
   description: 'List of placed orders. Erased after one week',
 
   columns: {
-    memberId: z.string().describe('Slack member ID of the person who placed the order'),
+    memberId: z.string().describe('Botpress user ID of the person who placed the order'),
     itemId: z.number().describe('ID of the item that was ordered'),
-    options: z
-      .string()
-      .optional()
-      .describe('Description of the options for the ordered item (e.g., ice / sugar level)'),
+    qty: z.number().default(1).describe('Quantity ordered'),
+    iceLevel: z.string().optional().describe('Ice level preference (e.g. "regular", "less ice", "no ice")'),
+    sugarLevel: z.string().optional().describe('Sugar level preference (e.g. "regular", "half sugar", "no sugar")'),
+    toppings: z.string().optional().describe('Requested toppings (e.g. "pearls, grass jelly")'),
   },
 })

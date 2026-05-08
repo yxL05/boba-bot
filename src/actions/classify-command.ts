@@ -1,15 +1,15 @@
-import { Action, z, adk, configuration } from '@botpress/runtime'
+import { Action, z, adk, configuration, bot } from '@botpress/runtime'
 
-const commandTypes = ['getCbo', 'listStores', 'getMenu', 'recommend', 'getTop', 'vote', 'order'] as const
+const commandTypes = ['getCbo', 'listStores', 'getMenu', 'recommend', 'vote', 'order', 'stopOrder'] as const
 
 const commandDescs: Record<(typeof commandTypes)[number], string> = {
   getCbo: 'asks who is the Chief Boba Officer',
   listStores: 'asks for the list of available stores',
   getMenu: 'asks for a store menu',
   recommend: 'asks for a drink recommendation',
-  getTop: 'asks for the top selling drinks',
   vote: 'request to start a vote',
   order: 'request related to viewing / deleting / placing an order',
+  stopOrder: 'request to stop or end the current ordering session early',
 }
 
 // const stripMention = (message: string) => message.replace(/^<@[^>]*>\s*/, '').trim()

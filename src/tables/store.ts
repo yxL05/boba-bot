@@ -3,7 +3,6 @@ import { Table, z } from '@botpress/runtime'
 const storeSchema = z.object({
   id: z.number().describe('Store ID'),
   name: z.string().describe('Name of the store'),
-  menuUrl: z.string().url().describe("URL of the store's web menu to be crawled"),
 })
 
 export const storeTable = new Table({
