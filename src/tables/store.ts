@@ -3,6 +3,7 @@ import { Table, z } from '@botpress/runtime'
 const storeSchema = z.object({
   id: z.number().describe('Store ID'),
   name: z.string().describe('Name of the store'),
+  menuUrl: z.string().describe('URL of the store menu page'),
 })
 
 export const storeTable = new Table({
@@ -15,6 +16,7 @@ export const storeTable = new Table({
 export const storeResponseSchema = storeSchema.pick({
   id: true,
   name: true,
+  menuUrl: true,
 })
 export type StoreResponse = z.infer<typeof storeResponseSchema>
 
@@ -23,5 +25,6 @@ export async function listStores(): Promise<StoreResponse[]> {
   return stores.map((s) => ({
     id: s.id,
     name: s.name,
+    menuUrl: s.menuUrl,
   }))
 }

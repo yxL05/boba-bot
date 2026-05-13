@@ -1,29 +1,8 @@
-import { MenuItemResponse } from '../tables/menu'
-
-export function formatMenu(items: MenuItemResponse[], storeName: string): string {
-  const header = `**${storeName} Menu**\n`
-
-  const body = items
-    .map((item) => {
-      const price = item.price != null ? ` - $${item.price.toFixed(2)}` : ''
-      const desc = item.description ? `\n_${item.description}_` : ''
-      return `**${item.id}. ${item.name}**${price}${desc}`
-    })
-    .join('\n\n')
-
-  return header + body
-}
-
-export function formatRecommendation(item: MenuItemResponse): string {
-  const price = item.price != null ? ` - $${item.price.toFixed(2)}` : ''
-  const desc = item.description ? `\n_${item.description}_` : ''
-  return `Based on your description, I would recommend drink #${item.id}: **${item.name}**${price}${desc}.`
-}
-
-export function formatVoteSuccess(storeName: string, orderTimeMs: number): string {
+export function formatVoteSuccess(storeName: string, orderTimeMs: number, menuUrl: string): string {
   return [
     `✅ Vote passed! Enough people are in for boba at *${storeName}*.`,
-    `You have ${formatDurationMs(orderTimeMs)} to place your order. Use: \`Order [qty] no. [drink #] with [desc]\``,
+    `Menu: ${menuUrl}`,
+    `You have ${formatDurationMs(orderTimeMs)} to place your order. Use: \`Order [qty] [drink name] with [desc (ice / sugar level, size, toppings, etc.)]\``,
   ].join('\n')
 }
 
@@ -54,12 +33,11 @@ export function formatVote(storeName: string, minBuyers: number, timeLimitMs: nu
   ].join('\n')
 }
 
-
-type OrderCustomization = { iceLevel?: string; sugarLevel?: string; toppings?: string }
+type OrderCustomization = { iceLevel?: string; sugarLevel?: string; size?: string; toppings?: string }
 
 function formatCustomization(c?: OrderCustomization): string {
   if (!c) return ''
-  const parts = [c.iceLevel, c.sugarLevel, c.toppings].filter(Boolean)
+  const parts = [c.iceLevel, c.sugarLevel, c.size, c.toppings].filter(Boolean)
   return parts.length ? ` (${parts.join(', ')})` : ''
 }
 
@@ -87,6 +65,7 @@ type OrderSummaryEntry = {
   qty: number
   iceLevel?: string | null
   sugarLevel?: string | null
+  size?: string | null
   toppings?: string | null
   orderId: number
 }
@@ -102,7 +81,7 @@ export function formatOrderSummary(
   lines.push('*Orders:*')
   for (const e of entries) {
     lines.push(
-      `• <@${e.memberId}>: ${e.qty}x ${e.drinkName}${formatCustomization({ iceLevel: e.iceLevel ?? undefined, sugarLevel: e.sugarLevel ?? undefined, toppings: e.toppings ?? undefined })} _(#${e.orderId})_`
+      `• <@${e.memberId}>: ${e.qty}x ${e.drinkName}${formatCustomization({ iceLevel: e.iceLevel ?? undefined, sugarLevel: e.sugarLevel ?? undefined, size: e.size ?? undefined, toppings: e.toppings ?? undefined })} _(#${e.orderId})_`
     )
   }
 

@@ -2,7 +2,7 @@ import { z, defineConfig } from '@botpress/runtime'
 
 export default defineConfig({
     name: 'boba-bot',
-    description: 'Boba bot that generates recommendations, displays the top-selling drinks, and notes down orders',
+    description: 'Boba bot that lists stores and their menu URLs, manages boba day votes, and notes down orders',
 
     defaultModels: {
         autonomous: 'openai:gpt-4.1-mini-2025-04-14', // Model used by execute() in conversations/workflows

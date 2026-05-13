@@ -10,6 +10,7 @@ export const VoteTimeout = new Workflow({
     conversationId: z.string(),
     timeLimitMs: z.number(),
     storeName: z.string(),
+    menuUrl: z.string(),
   }),
 
   output: z.object({}),
@@ -55,7 +56,7 @@ export const VoteTimeout = new Workflow({
       deadlineMs,
     })
 
-    await conversation.send({ type: 'text', payload: { text: formatVoteSuccess(input.storeName, orderTimeMs) } })
+    await conversation.send({ type: 'text', payload: { text: formatVoteSuccess(input.storeName, orderTimeMs, input.menuUrl) } })
 
     return {}
   },

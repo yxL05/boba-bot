@@ -1,37 +1,20 @@
 # boba-bot
 
-A Slack bot that handles all boba business within Botpress built using the ADK. It can generate recommendations, display the top-selling drinks, and note down orders (though someone will have to place the order manually on the delivery app of their choice).
+A Slack bot that handles all boba business within Botpress, built using the ADK. It lists stores and their menus, manages boba day votes, and notes down orders (someone will still have to place the order manually on the delivery app of their choice).
 
 ## Use Cases
 
 > **Important:** you must **mention** the bot at the beginning of each command.
 
-### List of stores and menus
-
-#### Stores
+### List of stores
 
 > Example prompt: `What are the available stores?`
 
-#### Menu
+### Menu
 
 > Example prompt: `What is the menu for [store]?`
 
-- Each menu item has a # that should be used when placing an order
-
-### Recommendations
-
-> Example prompt: `Recommend a drink from [store] based on these criteria: [desc]`
-
-An AI-generated recommendation will be provided based on
-
-- the specified store if among the available list
-- the provided description if present
-
-### Top-sellers
-
-> Example prompt: `Show me the top [#] selling drinks from [store].`
-
-The top sellers (of the store if specified) are displayed based on # of past orders.
+The bot replies with the store's menu URL.
 
 ### Orders
 
@@ -45,28 +28,25 @@ The bot generates a message that people can react to if they are interested in o
 
 #### Place order
 
-> Example prompt: `Order [qty] no. [drink # from menu] with [desc (e.g., less ice, half sugar, toppings)]`
+> Example prompt: `Order [qty] [drink name] with [desc (e.g., less ice, half sugar, toppings)]`
 
 - The users who opted in have `configuration.orderTime (default = 30 minutes)` to place their orders.
-- The bot then provides a confirmation number for that order which can be viewed or cancelled (before the time limit).
+- The bot provides a confirmation number for each order, which can be viewed or cancelled before the time limit.
   > Example prompt: `Cancel order [#]` or `View order [#]` or `View all my orders`
-- After the time limit has passed, the bot mentions the user who originally initiated the order with the order list and anyone who opted in but didn't submit an order.
+- After the time limit has passed, the bot mentions the user who originally initiated the order with the full order list and anyone who opted in but didn't submit an order.
 
 ## Internal Logic
 
 ### Stores & menus
 
 - Store names and menu URLs are stored in a table that can only be updated manually.
-- Menus are stored in a single table and will be refreshed every Saturday via a background workflow.
-- The background workflow first re-indexes the KB, then uses it to update the active status of every drink and add new items.
+- When asked for a menu, the bot looks up the store and replies with its menu URL.
 
 ### Order data
 
-- The order history is cleared when the menus are updated.
-- The # of sales are tracked directly within the menu table.
+- Orders are stored in a table and tracked for the duration of the ordering session.
+- Each order stores the drink name as a free-form string extracted from the user's message.
 
 ## Limitations
-
-> Lack of unique identifiers for menu items (since they are obtained via web crawling) means that duplicates may be created when updating the menu every week.
 
 > The bot does not support back-and-forth conversations that hold context but rather single commands.

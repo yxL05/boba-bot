@@ -1,16 +1,12 @@
-import { Conversation, Autonomous, z, configuration, actions, bot } from '@botpress/runtime'
+import { Conversation, z, configuration, actions, bot } from '@botpress/runtime'
 import { finalizeOrders } from '../utils/finalize-orders'
 import { formatStores } from './store'
 import { listStores, StoreResponse } from '../tables/store'
 import {
-  formatMenu,
-  formatRecommendation,
   formatVote,
   formatOrderConfirmation,
   formatOrderDetails,
-  formatOrderSummary,
 } from './menu'
-import { getMenu, menuTable } from '../tables/menu'
 import { orderTable } from '../tables/order'
 import { VoteTimeout } from '../workflows/vote-timeout'
 
@@ -44,21 +40,7 @@ export default new Conversation({
         const store = await resolveStore({ payload })
         if (!store) break
 
-        await sendText(formatMenu(await getMenu(store.id), store.name))
-        break
-      }
-      case 'recommend': {
-        const store = await resolveStore({ payload })
-        if (!store) break
-
-        const { criteria } = await actions.extractCriteria({ payload })
-
-        const { item } = await actions.generateRecommendation({
-          storeId: store.id,
-          criteria,
-        })
-
-        await sendText(formatRecommendation(item))
+        await sendText(`Here's the menu for *${store.name}*: ${store.menuUrl}`)
         break
       }
       case 'vote': {
@@ -111,12 +93,13 @@ export default new Conversation({
           conversationId: props.conversation.id,
           timeLimitMs: timeLimit,
           storeName: voteStore.name,
+          menuUrl: voteStore.menuUrl,
         })
 
         break
       }
       case 'order': {
-        const { intent, qty, drinkNumber, orderId, description } = await actions.extractOrderParams({ payload })
+        const { intent, qty, itemName, orderId, description } = await actions.extractOrderParams({ payload })
         const userId = props.message.userId
 
         if (intent === 'place') {
@@ -125,14 +108,8 @@ export default new Conversation({
             break
           }
 
-          if (!drinkNumber) {
-            await sendText('Please specify a drink number from the menu (e.g., "Order 2 no. 5 with less ice").')
-            break
-          }
-
-          const menuItem = await menuTable.getRow({ id: drinkNumber })
-          if (!menuItem || menuItem.storeId !== bot.state.order.storeId) {
-            await sendText(`Drink #${drinkNumber} is not on the menu for *${bot.state.order.storeName}*.`)
+          if (!itemName) {
+            await sendText('Please specify a drink name (e.g., "Order 2 Pearl Milk Tea with less ice").')
             break
           }
 
@@ -141,10 +118,11 @@ export default new Conversation({
             rows: [
               {
                 memberId: userId,
-                itemId: drinkNumber,
+                itemName,
                 qty: orderQty,
                 iceLevel: description?.iceLevel,
                 sugarLevel: description?.sugarLevel,
+                size: description?.size,
                 toppings: description?.toppings,
               },
             ],
@@ -156,7 +134,7 @@ export default new Conversation({
             placedOrderIds: [...bot.state.order.placedOrderIds, newOrderId],
           }
 
-          await sendText(formatOrderConfirmation(newOrderId, menuItem.name, orderQty, description))
+          await sendText(formatOrderConfirmation(newOrderId, itemName, orderQty, description))
           break
         }
 
@@ -172,11 +150,11 @@ export default new Conversation({
             break
           }
 
-          const menuItem = await menuTable.getRow({ id: order.itemId })
           await sendText(
-            formatOrderDetails(orderId, menuItem?.name ?? `Item #${order.itemId}`, order.qty, {
+            formatOrderDetails(orderId, order.itemName, order.qty, {
               iceLevel: order.iceLevel ?? undefined,
               sugarLevel: order.sugarLevel ?? undefined,
+              size: order.size ?? undefined,
               toppings: order.toppings ?? undefined,
             })
           )
@@ -255,24 +233,9 @@ export default new Conversation({
             break
           }
 
-          const itemIds = [...new Set(myOrders.map((o) => o.itemId))]
-          const itemNameMap = new Map<number, string>()
-          await Promise.all(
-            itemIds.map(async (id) => {
-              const item = await menuTable.getRow({ id })
-              if (item) itemNameMap.set(id, item.name)
-            })
-          )
-
           const lines = myOrders.map((o) => {
-            const name = itemNameMap.get(o.itemId) ?? `Item #${o.itemId}`
-            const custom = {
-              iceLevel: o.iceLevel ?? undefined,
-              sugarLevel: o.sugarLevel ?? undefined,
-              toppings: o.toppings ?? undefined,
-            }
-            const customStr = [custom.iceLevel, custom.sugarLevel, custom.toppings].filter(Boolean).join(', ')
-            return `• *#${o.id}*: ${o.qty}x ${name}${customStr ? ` (${customStr})` : ''}`
+            const customStr = [o.iceLevel, o.sugarLevel, o.size, o.toppings].filter(Boolean).join(', ')
+            return `• *#${o.id}*: ${o.qty}x ${o.itemName}${customStr ? ` (${customStr})` : ''}`
           })
 
           await sendText(`*Your orders for ${bot.state.order.storeName}:*\n${lines.join('\n')}`)
@@ -300,7 +263,19 @@ export default new Conversation({
         break
       }
       default:
-        await sendText("I'm not sure I understood your request. Can you reformulate it?")
+        await sendText(
+          [
+            "I'm not sure I understood your request. Here are the accepted prompts:",
+            '• `Who is the Chief Boba Officer?`',
+            '• `What are the available stores?`',
+            '• `What is the menu for [store]?`',
+            '• `Start a vote for boba day at [store] with [#] min buyers and a time limit of [time]`',
+            '• `Order [qty] [drink name] with [customization]`',
+            '• `View order [#]` / `View all my orders`',
+            '• `Cancel order [#]` / `Cancel all my orders`',
+            '• `Stop the order session`',
+          ].join('\n')
+        )
     }
 
     async function sendText(text: string) {
